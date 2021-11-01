@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 struct Node
 {
@@ -10,13 +11,10 @@ struct Node
 	Node* right;
 	Node* prev;
 
-	Node(int key = 0): 
-		key{key}, height{1}, size{1},
-		left{}, right{},  prev{} {}
+	Node(int key = 0): key{key}, height{1}, size{1},
+		left{}, right{}, prev{} {}
 
-	Node(const Node& other):
-		key{other.key}, height{other.height}, size{other.size},
-		left{}, right{}, prev{} { *this = other; }
+	Node(const Node& other): left{}, right{}, prev{} { *this = other; }
 
 	Node(Node&& other): 
 		key{other.key}, height{other.height}, size{other.size},
@@ -35,50 +33,37 @@ struct Node
 			delete right;
 			prev = nullptr;
 
-			key    = other.key;
-			height = other.height;
+			Node *curr = this;
+			Node const* cp_node = &other;
 
-			if (other.left)
+			while(true)
 			{
-				left = new Node;
-				left->prev = this;
-				left->NodeCopy(other.left);
-			}
-			if (other.right)
-			{
-				right = new Node;
-				right->prev = this;
-				right->NodeCopy(other.right);
+				curr->key    = cp_node->key;
+				curr->height = cp_node->height;
+				curr->size   = cp_node->size;
+
+				if (cp_node->left && !curr->left)
+				{
+					curr->left = new Node;
+					curr->left->prev = curr;
+					cp_node = cp_node->left;
+					curr 	= curr->left;
+				}
+				else if (cp_node->right && !curr->right)
+				{
+					curr->right = new Node;
+					curr->right->prev = curr;
+					cp_node = cp_node->right;
+					curr 	= curr->right;
+				}
+				else if (cp_node->prev)
+				{
+					cp_node = cp_node->prev;
+					curr	= curr->prev;
+				} else break;
 			}
 		}
 		return *this;
-	}
-
-	void NodeCopy(Node* other)
-	{
-		Node* curr = this;
-
-		while (true)
-		{
-			curr->key 	 = other->key;
-			curr->height = other->height;
-
-			if (other->left)
-			{
-				curr->left = new Node;
-				curr->left->prev = curr;
-				curr = curr->left;
-				other = other->left;
-			} 
-			else if (other->right)
-			{
-				curr->right = new Node;
-				curr->right->prev = curr;
-				curr = curr->right;
-				other = other->right;
-			}
-			else break;
-		}
 	}
 
 	Node& operator= (Node&& other)
@@ -125,16 +110,29 @@ struct Node
 		}
 	}
 
+	void calc_height()
+	{
+		int h_left  =  left ?  left->height : 1;
+		int h_right = right ? right->height : 1;
+		height = std::max(h_left, h_right) + 1;
+	}
+
+	void calc_size()
+	{
+		int s_left  =  left ?  left->size : 0;
+		int s_right = right ? right->size : 0;
+		size = s_left + s_right + 1;
+	}
+
 	void insert(int Key)
 	{
 		if (Key < key)
 		{
 			if (left)
 				left->insert(Key);
-			else
+			else 
 			{
-				left = new Node;
-				left->key  = Key; 
+				left = new Node{Key};
 				left->prev = this;
 			}
 		}
@@ -144,11 +142,13 @@ struct Node
 				right->insert(Key);
 			else 
 			{
-				right = new Node;
-				right->key  = Key; 
+				right = new Node{Key};
 				right->prev = this;
 			}
 		}
+
+		calc_height();
+		calc_size();
 //		balance();
 	}
 
@@ -189,17 +189,17 @@ struct Node
 class Tree
 {
 	Node top;
-	size_t size;
+	size_t size{};
 public:
 
 	void insert(int Key)
 	{
-		if (top.size != 0)
+		if (size != 0)
 			top.insert(Key);
 		else
 			top.key = Key;
 
-		top.size++;
+		size++;
 	}
 
 	void graph()
@@ -222,11 +222,14 @@ int main()
 	tree.insert(3);
 	tree.insert(5);
 	tree.insert(8);
+	tree.insert(6);
 	tree.insert(11);
 	tree.insert(-3);
 	tree.insert(9);
 
-	tree.graph();
+	Tree tr1{tree};
+
+	tr1.graph();
 
 	return 0;
 }
