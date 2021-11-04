@@ -1,5 +1,5 @@
 CXX ?= g++
-CXXFLAGS ?= -o $@
+CXXFLAGS ?= -O2 -o $@
 
 tree: main.cpp tree.hpp
 	$(CXX) $(CXXFLAGS) $<
