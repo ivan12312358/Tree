@@ -46,7 +46,7 @@ void gentest(char* test_fname, char* answ_fname)
 		{
 			test << "n " << k << std::endl;
 			auto it = keys.lower_bound(k);
-			answ << std::distance(keys.cbegin(), it) << std::endl;
+			answ << std::distance(keys.cbegin(), it) << " ";
 		}
 		else if (request == 2)
 		{
@@ -57,7 +57,7 @@ void gentest(char* test_fname, char* answ_fname)
 
 			auto it = keys.cbegin();
 			advance(it, k - 1);
-			answ << *it << std::endl;
+			answ << *it << " ";
 		}
 	}
 }
