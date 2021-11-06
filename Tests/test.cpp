@@ -3,19 +3,28 @@
 #include "../tree.hpp"
 #include <ctime>
 
+void gentest(char* test_fname, char* answ_fname);
+
 int main(int argc, char** argv)
 {
-	if (argc != 3)
+	if (argc < 3)
 	{
 		std::cout << "Not enough arguments" << std::endl;
 		return -1;
 	}
 
+	gentest(argv[1], argv[2]);
+
+	return 0;
+}
+
+void gentest(char* test_fname, char* answ_fname)
+{
 	std::srand(std::time(nullptr));
 
 	std::set<int> keys;
-	std::fstream test{argv[1], std::ios::out}, 
-				 answ{argv[2], std::ios::out};
+	std::fstream test{test_fname, std::ios::out}, 
+				 answ{answ_fname, std::ios::out};
 
 	char request{};
 	int k{};
@@ -51,6 +60,4 @@ int main(int argc, char** argv)
 			answ << *it << std::endl;
 		}
 	}
-
-	return 0;
 }

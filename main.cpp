@@ -4,7 +4,7 @@
 int main()
 {
 	Tree tree{};
-
+	
 	char request{};
 	int k{};
 
@@ -17,13 +17,22 @@ int main()
 			if (request == 'k')
 				tree.insert(k);
 			else if (request == 'n')
-				std::cout << tree.cnt_less(k) << std::endl;
+				std::cout << tree.cnt_less(k) << " ";
 			else if (request == 'm')
 			{
-				if (k > tree.size() || k <= 0)
-					return -1;
+				if (k <= 0)
+				{
+					std::cout << "ERROR: K min is less than zero" << std::endl;
+					return -1;					
+				}
 
-				std::cout << tree.k_min(k) << std::endl;
+				if (k > tree.size())
+				{
+					std::cout << "ERROR: K min is greater than tree size" << std::endl;
+					return -1;
+				}
+				
+				std::cout << tree.k_min(k) << " ";
 			}
 		}
 		else break;

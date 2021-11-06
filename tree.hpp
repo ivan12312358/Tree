@@ -5,21 +5,57 @@
 struct Node
 {
 	int key;
-	size_t height;
-	size_t size;
-	Node* left;
-	Node* right;
-	Node* prev;
+	size_t height = 1;
+	size_t size   = 1;
+	Node* left    = nullptr;
+	Node* right   = nullptr;
+	Node* prev    = nullptr;
 
-	Node(int key = 0): key{key}, height{1}, size{1},
-		left{}, right{}, prev{} {}
+	Node(int key = 0): key{key} {}
 
-	Node(const Node& other): left{}, right{}, prev{} { *this = other; }
+	Node(const Node& other): 
+		key{other.key}, height{other.height}, 
+		size{other.size}, prev{other.prev}
+	{
+		Node *curr = this;
+		Node const* cp_node = &other;
+
+		while(true)
+		{
+			if (cp_node->left && !curr->left)
+			{
+				curr->left = new Node;
+				curr->left->prev = curr;
+				cp_node = cp_node->left;
+				curr 	= curr->left;
+			}
+			else if (cp_node->right && !curr->right)
+			{
+				curr->right = new Node;
+				curr->right->prev = curr;
+				cp_node = cp_node->right;
+				curr 	= curr->right;
+			}
+			else if (cp_node->prev)
+			{
+				cp_node = cp_node->prev;
+				curr	= curr->prev;
+			} 
+			else break;
+
+			curr->key    = cp_node->key;
+			curr->height = cp_node->height;
+			curr->size   = cp_node->size;
+		}
+	}
 
 	Node(Node&& other):
 		key{other.key}, height{other.height}, size{other.size},
 		left{other.left}, right{other.right}, prev{other.prev}
 	{
+		if (left)   left->prev = this;
+		if (right) right->prev = this;
+
 		other.left  = nullptr;
 		other.right = nullptr;
 		other.prev  = nullptr;
@@ -28,41 +64,8 @@ struct Node
 	Node& operator= (const Node& other)
 	{
 		if (this != &other)
-		{
-			delete left;
-			delete right;
-			prev = nullptr;
+			*this = Node{other};
 
-			Node *curr = this;
-			Node const* cp_node = &other;
-
-			while(true)
-			{
-				if (cp_node->left && !curr->left)
-				{
-					curr->left = new Node;
-					curr->left->prev = curr;
-					cp_node = cp_node->left;
-					curr 	= curr->left;
-				}
-				else if (cp_node->right && !curr->right)
-				{
-					curr->right = new Node;
-					curr->right->prev = curr;
-					cp_node = cp_node->right;
-					curr 	= curr->right;
-				}
-				else if (cp_node->prev)
-				{
-					cp_node = cp_node->prev;
-					curr	= curr->prev;
-				} else break;
-
-				curr->key    = cp_node->key;
-				curr->height = cp_node->height;
-				curr->size   = cp_node->size;
-			}
-		}
 		return *this;
 	}
 
@@ -73,17 +76,21 @@ struct Node
 			delete left;
 			delete right;
 
-			key   = other.key, 	 height = other.height;
-			left  = other.left,  other.left  = nullptr;
-			right = other.right, other.right = nullptr;
-			prev  = other.prev,  other.prev  = nullptr;
+			key    = other.key, 	 
+			height = other.height, size = other.size;
+			left   = other.left,   other.left  = nullptr;
+			right  = other.right,  other.right = nullptr;
+			prev   = other.prev,   other.prev  = nullptr;
+
+			if (left)   left->prev = this;
+			if (right) right->prev = this;
 		}
 		return *this;
 	}
 
 	~Node()
 	{
-		if(!left && !right)
+		if (!left && !right)
 			return;
 
 		Node *curr = this, *tmp{};
@@ -139,9 +146,6 @@ struct Node
 
 	Node* insert(int Key)
 	{
-		if (!this)
-			return new Node{Key};
-
 		if (Key < key)
 		{
 			if (left)
@@ -273,21 +277,19 @@ struct Node
 class Tree
 {
 	Node* top;
-
+	bool  init;
 public:
-	Tree(): top{} {}
+	Tree(): top{new Node}, init{false} {}
 
-	Tree(const Tree& other): top{} { *this = other; }
+	Tree(const Tree& other): top{new Node}, init{other.init} { *top = *other.top; }
 
-	Tree(Tree&& other): top{other.top} {}
+	Tree(Tree&& other): top{other.top}, init{other.init} { other.top = nullptr; }
 
 	Tree& operator= (const Tree& other)
 	{
 		if (this != &other)
-		{
-			delete top;
-			*top = *other.top;
-		}
+			*this = Tree{other};
+
 		return *this;
 	}
 
@@ -296,26 +298,34 @@ public:
 		if (this != &other)
 		{
 			delete top;
-			top = other.top;
+
+			top  = other.top;
+			init = other.init;
 			other.top = nullptr;
 		}
 		return *this;
 	}
 
-	void insert(int Key) 
+	size_t size() const { return init ? top->size : 0; }
+
+	void insert(int Key)
 	{
-		if (top)
-			top = top->insert(Key); 
+		if (init)
+			top = top->insert(Key);
 		else
-			top = new Node{Key};
+		{
+			top->key = Key;
+			init = true;
+		}
 	}
 
-	void graph(std::string f_name = std::string{"graph"}) const { if (top) top->graph(f_name); }
-
-	size_t size() const { return top ? top->size : 0; }
+	void graph(std::string f_name = std::string{"graph"}) const { if (init) top->graph(f_name); }
 
 	int k_min(int k) const
 	{
+		//Tree isn't initialized
+		if (!init) return 0;
+
 		Node* curr = top;
 		size_t l_size{};
 
@@ -337,6 +347,9 @@ public:
 
 	size_t cnt_less(int k) const
 	{
+		//Tree isn't initialized
+		if (!init) return 0;
+
 		Node*  curr = top;
 		size_t cnt_min{}, l_size{};
 
@@ -360,4 +373,6 @@ public:
 	}
 
 	~Tree() { delete top; }
+
+	friend bool is_equal(const Tree& tr1, const Tree& tr2);
 };
